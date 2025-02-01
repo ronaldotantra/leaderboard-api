@@ -1,0 +1,41 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Write ENV File
+        run: |
+          echo "${{ secrets.ENV }}" > .env
+      - name: Build
+        run: docker build -t ronaldotantra/leaderboard-api .
+      - name: Login to Docker Hub
+        run: docker login -u ${{ vars.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+      - name: Push
+        run: |
+          TAG=$(date '+%Y%m%d-%H%M%S')
+          docker tag ronaldotantra/leaderboard-api ronaldotantra/leaderboard-api:$TAG
+          docker push ronaldotantra/leaderboard-api:$TAG
+          docker push ronaldotantra/leaderboard-api:latest
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy
+        uses: appleboy/ssh-action@master
+        with:
+            host: ${{ secrets.SSH_HOST }}
+            username: ${{ secrets.SSH_USERNAME }}
+            key: ${{ secrets.SSH_PRIVATE_KEY }}
+            port: 22
+            script: |
+              docker login -u ${{ vars.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+              docker pull ronaldotantra/leaderboard-api:latest
+              docker stop leaderboard-api
+              docker rm leaderboard-api
+              docker run -d --name leaderboard-api --restart unless-stopped -p 8080:8080 -e TZ=Asia/Jakarta ronaldotantra/leaderboard-api:latest
