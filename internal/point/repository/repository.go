@@ -2,6 +2,7 @@ package userrepository
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -63,5 +64,35 @@ func (r *Repository) BulkInsertPoint(ctx context.Context, input point.InsertPoin
 		}
 		return
 	}
+	return
+}
+
+func (r *Repository) GetTotalPoint(ctx context.Context, input point.GetTotalPointInput) (output []point.GetTotalPointOutput, err error) {
+	totalPointStmt := r.sql.From(constant.TablePoint).
+		Select("user_id").
+		Select("sum(point) as total_point").
+		Where("date >= ?", input.StartDate).
+		Where("date < ?", input.EndDate).
+		GroupBy("user_id").To(&output)
+
+	item := point.GetTotalPointOutput{}
+	query := r.sql.From(constant.TableUser+" u").
+		With("total_point", totalPointStmt).
+		LeftJoin("total_point", "u.id = total_point.user_id").
+		Select("u.name").To(&item.Name).
+		Select("coalesce(total_point.total_point, 0) as total").To(&item.TotalPoint).
+		OrderBy("total desc, u.name asc")
+
+	err = query.QueryAndClose(ctx, r.UseTx(ctx), func(rows *sql.Rows) {
+		output = append(output, item)
+	})
+	if err != nil {
+		sentryHub := sentry.GetHubFromContext(ctx)
+		if sentryHub != nil {
+			sentryHub.CaptureException(err)
+		}
+		return
+	}
+
 	return
 }

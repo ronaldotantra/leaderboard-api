@@ -26,3 +26,13 @@ type GetLeaderboardInput struct {
 	Month int
 	Year  int
 }
+
+type GetTotalPointInput struct {
+	StartDate time.Time
+	EndDate   time.Time
+}
+
+type GetTotalPointOutput struct {
+	Name       string
+	TotalPoint int
+}

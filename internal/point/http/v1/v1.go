@@ -50,13 +50,13 @@ func (h *Handler) GetLeaderboard(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	payload := GetLeaderboardRequest{}
-	err := c.ShouldBind(&payload)
+	err := c.ShouldBindQuery(&payload)
 	if err != nil {
 		response.Failed(c, err)
 		return
 	}
 
-	err = h.service.GetLeaderboard(ctx, point.GetLeaderboardPayload{
+	output, err := h.service.GetLeaderboard(ctx, point.GetLeaderboardPayload{
 		Month: payload.Month,
 		Year:  payload.Year,
 	})
@@ -65,5 +65,5 @@ func (h *Handler) GetLeaderboard(c *gin.Context) {
 		return
 	}
 
-	response.Success[string](c, http.StatusOK, "ok")
+	response.Success[[]point.GetTotalPointOutput](c, http.StatusOK, output)
 }

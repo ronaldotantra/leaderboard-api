@@ -48,6 +48,19 @@ func (s *service) CreatePoint(ctx context.Context, input CreatePointPayload) err
 	})
 }
 
-func (s *service) GetLeaderboard(ctx context.Context, input GetLeaderboardPayload) (err error) {
-	return
+func (s *service) GetLeaderboard(ctx context.Context, input GetLeaderboardPayload) (output []GetTotalPointOutput, err error) {
+	now := time.Now()
+	month := now.Month()
+	year := now.Year()
+	if input.Month != nil {
+		month = time.Month(*input.Month)
+	}
+	if input.Year != nil {
+		year = *input.Year
+	}
+	jakarta := time.FixedZone("Asia/Jakarta", 7*60*60)
+	return s.repo.GetTotalPoint(ctx, GetTotalPointInput{
+		StartDate: time.Date(year, month, 1, 0, 0, 0, 0, jakarta),
+		EndDate:   time.Date(year, month+1, 1, 0, 0, 0, 0, jakarta),
+	})
 }

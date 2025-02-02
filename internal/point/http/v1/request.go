@@ -5,6 +5,6 @@ type InsertPointRequest struct {
 }
 
 type GetLeaderboardRequest struct {
-	Month *int `json:"month" binding:"required,min=1,max=12"`
-	Year  *int `json:"year" binding:"required`
+	Month *int `form:"month" binding:"omitempty,min=1,max=12"`
+	Year  *int `form:"year" binding:"omitempty"`
 }
