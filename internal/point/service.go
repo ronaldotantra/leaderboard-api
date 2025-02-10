@@ -2,6 +2,7 @@ package point
 
 import (
 	"context"
+	"math"
 	"time"
 
 	handlederror "github.com/ronaldotantra/leaderboard-api/internal/errors"
@@ -28,6 +29,14 @@ func (s *service) CreatePoint(ctx context.Context, input CreatePointPayload) err
 	if lenUniqueUserIds != len(uniqueUserId) {
 		return handlederror.BadRequest("user_id_duplicate").WithMessage("user_id_duplicate")
 	}
+	leaderboard, err := s.GetLeaderboard(ctx, GetLeaderboardPayload{})
+	if err != nil {
+		return err
+	}
+	leaderboardMap := make(map[int]int)
+	for _, item := range leaderboard {
+		leaderboardMap[item.Id] = item.TotalPoint
+	}
 	currentScore := len(input.UserIDs) / 2
 	isEven := len(input.UserIDs)%2 == 0
 	now := time.Now()
@@ -35,9 +44,22 @@ func (s *service) CreatePoint(ctx context.Context, input CreatePointPayload) err
 		if isEven && currentScore == 0 {
 			currentScore--
 		}
+		score := currentScore
+
+		totalPoint, ok := leaderboardMap[userID]
+		if !ok {
+			return handlederror.BadRequest("user_not_found").WithMessage("user_not_found")
+		}
+		// TODO add feature flag booster
+		if currentScore > 0 && totalPoint < 0 {
+			multiplier := int(math.Ceil(math.Abs(float64(totalPoint)) / 10))
+			score = currentScore * multiplier
+		}
+		// TODO add feature flag x2
+
 		items = append(items, InsertPointItem{
 			UserID: userID,
-			Point:  currentScore,
+			Point:  score,
 			Date:   now,
 		})
 		currentScore--

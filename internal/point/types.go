@@ -33,6 +33,7 @@ type GetTotalPointInput struct {
 }
 
 type GetTotalPointOutput struct {
+	Id         int
 	Name       string
 	TotalPoint int
 }

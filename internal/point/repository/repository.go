@@ -79,6 +79,7 @@ func (r *Repository) GetTotalPoint(ctx context.Context, input point.GetTotalPoin
 	query := r.sql.From(constant.TableUser+" u").
 		With("total_point", totalPointStmt).
 		LeftJoin("total_point", "u.id = total_point.user_id").
+		Select("u.id").To(&item.Id).
 		Select("u.name").To(&item.Name).
 		Select("coalesce(total_point.total_point, 0) as total").To(&item.TotalPoint).
 		OrderBy("total desc, u.name asc")
