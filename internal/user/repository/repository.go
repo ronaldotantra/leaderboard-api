@@ -61,7 +61,8 @@ func (r *Repository) SelectUsers(ctx context.Context) (output []user.User, err e
 		Select("u.name").To(&item.Name).
 		Select("u.email").To(&item.Email).
 		Select("u.created_at").To(&item.CreatedAt).
-		Select("u.updated_at").To(&item.UpdatedAt)
+		Select("u.updated_at").To(&item.UpdatedAt).
+		OrderBy("u.name ASC")
 
 	err = query.QueryAndClose(ctx, r.UseTx(ctx), func(rows *sql.Rows) {
 		output = append(output, item)
